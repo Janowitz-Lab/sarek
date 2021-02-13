@@ -1364,7 +1364,7 @@ process SamtoolsStats {
     publishDir "${params.outdir}/Reports/${idSample}/SamToolsStats", mode: params.publish_dir_mode
 
     input:
-        set idPatient, idSample, file(bam) from bam_mapped_merged
+        set idPatient, idSample, file(bam) from bam_duplicates_marked
 
     output:
         file ("${bam}.samtools.stats.out") into samtoolsStatsReport
@@ -1379,8 +1379,6 @@ process SamtoolsStats {
 
 samtoolsStatsReport = samtoolsStatsReport.dump(tag:'SAMTools')
 
-bamBamQC = bamMappedBamQC.mix(bam_recalibrated_bamqc)
-
 process BamQC {
     label 'memory_max'
     label 'cpus_16'
@@ -1390,7 +1388,7 @@ process BamQC {
     publishDir "${params.outdir}/Reports/${idSample}/bamQC", mode: params.publish_dir_mode
 
     input:
-        set idPatient, idSample, file(bam) from bamBamQC
+        set idPatient, idSample, file(bam) from bam_duplicates_marked
         file(targetBED) from ch_target_bed
 
     output:
@@ -3338,7 +3336,6 @@ process MultiQC {
         file ('FastQC/*') from fastQCReport.collect().ifEmpty([])
         file ('TrimmedFastQC/*') from trimGaloreReport.collect().ifEmpty([])
         file ('MarkDuplicates/*') from duplicates_marked_report.collect().ifEmpty([])
-        file ('DuplicatesMarked/*.recal.table') from baseRecalibratorReport.collect().ifEmpty([])
         file ('SamToolsStats/*') from samtoolsStatsReport.collect().ifEmpty([])
         file ('snpEff/*') from snpeffReport.collect().ifEmpty([])
         file ('VCFTools/*') from vcftoolsReport.collect().ifEmpty([])
@@ -3627,8 +3624,6 @@ def defineStepList() {
         'annotate',
         'controlfreec',
         'mapping',
-        'preparerecalibration',
-        'recalibrate',
         'variantcalling'
     ]
 }
